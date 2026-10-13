@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>亲测 QinCe：亲属性别推断模型</title>
+<meta name="description" content="输入一个亲属称呼，亲测告诉你 TA 的性别，并出具一份完整的鉴定报告。开源，参数量为 0。">
+<meta property="og:title" content="亲测 QinCe：亲属性别推断模型">
+<meta property="og:description" content="你姥爷是男是女，现在可以问 AI 了。开源，自带测试集准确率 100%。">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='6' width='52' height='52' rx='8' fill='none' stroke='%23BE2A1D' stroke-width='5'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34' font-weight='900' font-family='serif' fill='%23BE2A1D'%3E亲%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip" href="#ask">跳到鉴定入口</a>
+
+<header class="top">
+  <div class="wrap top-row">
+    <a class="brand" href="#" aria-label="亲测 QinCe 首页">
+      <svg class="brand-seal" viewBox="0 0 40 40" aria-hidden="true">
+        <rect x="3" y="3" width="34" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="3"></rect>
+        <text x="20" y="28" text-anchor="middle" font-size="22" font-weight="900">亲</text>
+      </svg>
+      <span class="brand-name">亲测</span>
+      <span class="brand-latin">QinCe</span>
+    </a>
+    <nav class="top-nav" aria-label="页面导航">
+      <a href="#bench">基准测试</a>
+      <a href="#how">工作原理</a>
+      <a href="#limits">已知局限</a>
+      <a class="top-gh" href="https://github.com/chenggma/qince">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <h1>你姥爷是男是女，<br>现在可以问 AI 了。</h1>
+      <p class="lead">亲测 QinCe 是一个开源的亲属性别推断模型。输入一个称呼，它判断这位亲属的性别，并出具一份带完整论证的鉴定报告。</p>
+
+      <form id="ask" class="ask" novalidate>
+        <label class="ask-label" for="term">要鉴定的称呼</label>
+        <div class="ask-row">
+          <input id="term" name="term" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="比如：姥爷" aria-describedby="ask-hint">
+          <button id="go" type="submit">开始鉴定</button>
+        </div>
+        <p id="ask-hint" class="ask-hint" role="status" aria-live="polite">支持中文和英文称呼，可以带“我的”“二”“表”这类前缀。</p>
+      </form>
+
+      <div class="picks" aria-label="常见称呼">
+        <button type="button" class="pick" data-term="二舅">二舅</button>
+        <button type="button" class="pick" data-term="丈母娘">丈母娘</button>
+        <button type="button" class="pick" data-term="女婿">女婿</button>
+        <button type="button" class="pick" data-term="外甥女">外甥女</button>
+        <button type="button" class="pick" data-term="连襟">连襟</button>
+        <button type="button" class="pick" data-term="cousin">cousin</button>
+      </div>
+    </div>
+
+    <div class="tree-card">
+      <p class="tree-title">不知道从谁开始？在家谱里点一位。</p>
+      <div class="tree" id="tree">
+        <svg class="tree-lines" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M180 60H380 M280 60V130 M150 130H410 M150 130V200 M410 130V200"></path>
+          <path d="M620 60H820 M720 60V130 M590 130H850 M590 130V200 M850 130V200"></path>
+          <path d="M410 200H590 M500 200V270 M320 270H680 M320 270V340 M500 270V340 M680 270V340"></path>
+        </svg>
+        <button type="button" class="node" style="--x:18%;--y:15%" data-term="爷爷">爷爷</button>
+        <button type="button" class="node" style="--x:38%;--y:15%" data-term="奶奶">奶奶</button>
+        <button type="button" class="node" style="--x:62%;--y:15%" data-term="姥爷">姥爷</button>
+        <button type="button" class="node" style="--x:82%;--y:15%" data-term="姥姥">姥姥</button>
+        <button type="button" class="node" style="--x:15%;--y:50%" data-term="姑姑">姑姑</button>
+        <button type="button" class="node" style="--x:41%;--y:50%" data-term="爸爸">爸爸</button>
+        <button type="button" class="node" style="--x:59%;--y:50%" data-term="妈妈">妈妈</button>
+        <button type="button" class="node" style="--x:85%;--y:50%" data-term="舅舅">舅舅</button>
+        <button type="button" class="node" style="--x:32%;--y:85%" data-term="哥哥">哥哥</button>
+        <button type="button" class="node node-self" style="--x:50%;--y:85%" data-term="我">你</button>
+        <button type="button" class="node" style="--x:68%;--y:85%" data-term="妹妹">妹妹</button>
+      </div>
+      <p class="tree-note" id="tree-note">已鉴定 0 / 10 位</p>
+    </div>
+  </div>
+</section>
+
+<section id="report" class="report" hidden aria-label="鉴定报告">
+  <div class="wrap">
+    <article class="paper" id="paper" tabindex="-1"></article>
+  </div>
+</section>
+
+<section id="bench" class="band">
+  <div class="wrap">
+    <h2>基准测试</h2>
+    <p class="band-lead">下面的数字不是抄来的。打开这个页面时，你的浏览器刚刚把测试集完整跑了一遍。测试集和模型用的是同一张表。</p>
+    <div class="table-scroll">
+      <table class="bench">
+        <thead>
+          <tr><th scope="col">方法</th><th scope="col">准确率</th><th scope="col">总耗时</th><th scope="col">需要打电话</th></tr>
+        </thead>
+        <tbody>
+          <tr class="bench-us">
+            <th scope="row">亲测 QinCe 1.0</th>
+            <td><span id="b-acc">计算中</span></td>
+            <td><span id="b-time">计算中</span></td>
+            <td>否</td>
+          </tr>
+          <tr>
+            <th scope="row">随机猜测</th>
+            <td><span id="b-rand">计算中</span></td>
+            <td>忽略不计</td>
+            <td>否</td>
+          </tr>
+          <tr>
+            <th scope="row">打电话问妈妈</th>
+            <td>100%（估计）</td>
+            <td>约 40 分钟，含被催婚（估计）</td>
+            <td>是</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="fine">随机猜测那一行每次刷新都会变。“打电话问妈妈”没有实测，数字是估计值。</p>
+  </div>
+</section>
+
+<section id="how" class="band band-dark">
+  <div class="wrap how-grid">
+    <div>
+      <h2>工作原理</h2>
+      <p class="band-lead">亲测没有神经网络，没有 GPU，参数量是 0。全部模型是一张 <span class="js-size">166</span> 行的对照表，放在 <code>model.js</code> 里。</p>
+      <ol class="steps">
+        <li><strong>清洗输入。</strong>去掉“我的”、空格和标点，把“二”“小”“表”“干”这类不影响性别的前缀拆出来。</li>
+        <li><strong>查表。</strong>每个称呼对应一条关系链，比如“舅妈”是“母亲的兄弟的妻子”。</li>
+        <li><strong>看最后一环。</strong>关系链的终点决定性别。“妻子”是女性，所以舅妈是女性。</li>
+        <li><strong>该拒答就拒答。</strong>称呼本身不带性别时，模型不回答。准确率就是这样保住的。</li>
+      </ol>
+    </div>
+    <pre class="code" aria-label="示例代码"><code>QinCe.predict('我的二舅妈')
+
+{
+  status: 'ok',
+  term: '二舅妈',
+  modifiers: [{ char: '二', meaning: '表示排行' }],
+  chain: ['母亲', '兄弟', '妻子'],
+  terminal: '妻子',
+  gender: '女'
+}</code></pre>
+  </div>
+</section>
+
+<section id="limits" class="band">
+  <div class="wrap limits-grid">
+    <div>
+      <h2>已知局限</h2>
+      <p class="band-lead">我们认为把做不到的事写清楚，比把准确率写大更重要。</p>
+    </div>
+    <dl class="limits">
+      <div><dt>cousin</dt><dd>英语里这个词不分男女，也不分堂表。这是本领域公认的开放问题，模型拒答。</dd></div>
+      <div><dt>弟妹</dt><dd>可能是弟弟的妻子，也可能是弟弟和妹妹两个人。模型拒答。</dd></div>
+      <div><dt>爱人、对象、配偶</dt><dd>信息不足。模型拒答。</dd></div>
+      <div><dt>你本人</dt><dd>不支持。建议询问家人。</dd></div>
+      <div><dt>字形</dt><dd>“女婿”两个字都带“女”，但女婿是男性。所以模型不看字形，只看关系链。</dd></div>
+      <div><dt>准确率 100%</dt><dd>指模型给出结论时的准确率。它有权不给结论。</dd></div>
+    </dl>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-row">
+    <div>
+      <h2>开源项目，欢迎收藏。</h2>
+      <p>代码和全部模型都在 GitHub 上，MIT 协议。发现漏掉的称呼，欢迎提 PR。</p>
+    </div>
+    <a class="foot-cta" href="https://github.com/chenggma/qince">去 GitHub 收藏</a>
+  </div>
+  <div class="wrap foot-fine">
+    <p>亲测只根据称呼的字面定义给出结论。它不采集任何个人信息，输入的内容不会离开你的浏览器。</p>
+  </div>
+</footer>
+
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
