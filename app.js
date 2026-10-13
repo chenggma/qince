@@ -450,6 +450,16 @@
     $('#tree-note').textContent = done === 10 ? '全家 10 位都已鉴定。' : '已鉴定 ' + done + ' / 10 位';
   }
 
+  /* ---------- 故意刁难时的弹窗 ---------- */
+
+  var meme = $('#meme');
+  function showMeme(r) {
+    $('#meme-reason').textContent = r.reason;
+    if (typeof meme.showModal === 'function') meme.showModal();
+    else meme.setAttribute('open', '');
+  }
+  meme.addEventListener('close', function () { input.focus(); input.select(); });
+
   /* ---------- 提交 ---------- */
 
   function setHint(text, isError) {
@@ -477,6 +487,7 @@
     steps.forEach(function (s, i) { setTimeout(function () { setHint(s + '…', false); goBtn.textContent = '鉴定中'; }, gap * i); });
     setTimeout(function () {
       renderReport(r);
+      if (r.status === 'ambiguous') showMeme(r);
       busy = false;
       goBtn.disabled = false;
       goBtn.textContent = '开始鉴定';
